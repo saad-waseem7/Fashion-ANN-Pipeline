@@ -10,28 +10,24 @@ from pathlib import Path
 
 import numpy as np
 import tensorflow as tf
+import yaml
 
 PROCESSED_DIR = Path(__file__).resolve().parent.parent / "data" / "processed"
 MODELS_DIR = Path(__file__).resolve().parent.parent / "models"
-
-HIDDEN_UNITS = 128
-DROPOUT_RATE = 0.2
-LEARNING_RATE = 0.001
-BATCH_SIZE = 128
-EPOCHS = 15
+PARAMS_PATH = Path(__file__).resolve().parent.parent / "params.yaml"
 
 
-def build_model() -> tf.keras.Model:
+def build_model(hidden_units: int, dropout_rate: float, learning_rate: float) -> tf.keras.Model:
     model = tf.keras.Sequential(
         [
             tf.keras.layers.Flatten(input_shape=(28, 28)),
-            tf.keras.layers.Dense(HIDDEN_UNITS, activation="relu"),
-            tf.keras.layers.Dropout(DROPOUT_RATE),
+            tf.keras.layers.Dense(hidden_units, activation="relu"),
+            tf.keras.layers.Dropout(dropout_rate),
             tf.keras.layers.Dense(10, activation="softmax"),
         ]
     )
     model.compile(
-        optimizer=tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE),
+        optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
         loss="sparse_categorical_crossentropy",
         metrics=["accuracy"],
     )
@@ -53,19 +49,28 @@ def save_history(history: tf.keras.callbacks.History, path: Path) -> None:
 
 
 def main() -> None:
+    with PARAMS_PATH.open() as f:
+        params = yaml.safe_load(f)
+
+    dense_units = params["train"]["dense_units"]
+    dropout_rate = params["train"]["dropout_rate"]
+    learning_rate = params["train"]["learning_rate"]
+    epochs = params["train"]["epochs"]
+    batch_size = params["train"]["batch_size"]
+
     train_images = np.load(PROCESSED_DIR / "train_images.npy")
     train_labels = np.load(PROCESSED_DIR / "train_labels.npy")
     val_images = np.load(PROCESSED_DIR / "val_images.npy")
     val_labels = np.load(PROCESSED_DIR / "val_labels.npy")
 
-    model = build_model()
+    model = build_model(dense_units, dropout_rate, learning_rate)
 
     history = model.fit(
         train_images,
         train_labels,
         validation_data=(val_images, val_labels),
-        epochs=EPOCHS,
-        batch_size=BATCH_SIZE,
+        epochs=epochs,
+        batch_size=batch_size,
     )
 
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
