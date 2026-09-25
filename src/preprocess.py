@@ -9,15 +9,23 @@ is passed through untouched aside from normalization.
 from pathlib import Path
 
 import numpy as np
+import yaml
 
 RAW_DIR = Path(__file__).resolve().parent.parent / "data" / "raw"
 PROCESSED_DIR = Path(__file__).resolve().parent.parent / "data" / "processed"
-
-VALIDATION_FRACTION = 0.1
-SPLIT_SEED = 42
+PARAMS_PATH = Path(__file__).resolve().parent.parent / "params.yaml"
 
 
 def main() -> None:
+    with PARAMS_PATH.open() as f:
+        params = yaml.safe_load(f)
+
+    # test_size is the fraction of the original training data held out for
+    # validation. It does not create a second test set; the official
+    # Fashion-MNIST test set is loaded and normalized separately below.
+    validation_fraction = params["preprocess"]["test_size"]
+    split_seed = params["preprocess"]["seed"]
+
     train_images = np.load(RAW_DIR / "train_images.npy")
     train_labels = np.load(RAW_DIR / "train_labels.npy")
     test_images = np.load(RAW_DIR / "test_images.npy")
@@ -27,10 +35,10 @@ def main() -> None:
     test_images = test_images.astype(np.float32) / 255.0
 
     num_samples = train_images.shape[0]
-    rng = np.random.default_rng(SPLIT_SEED)
+    rng = np.random.default_rng(split_seed)
     shuffled_indices = rng.permutation(num_samples)
 
-    num_val = int(round(num_samples * VALIDATION_FRACTION))
+    num_val = int(round(num_samples * validation_fraction))
     val_indices = shuffled_indices[:num_val]
     train_indices = shuffled_indices[num_val:]
 
