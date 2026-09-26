@@ -21,6 +21,7 @@ def build_model(hidden_units: int, dropout_rate: float, learning_rate: float) ->
     model = tf.keras.Sequential(
         [
             tf.keras.layers.Flatten(input_shape=(28, 28)),
+            # Conflict simulation: branch B training configuration
             tf.keras.layers.Dense(hidden_units, activation="relu"),
             tf.keras.layers.Dropout(dropout_rate),
             tf.keras.layers.Dense(10, activation="softmax"),
