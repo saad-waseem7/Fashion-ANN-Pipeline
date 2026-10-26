@@ -40,7 +40,8 @@ stages:
       - data/processed
       - models/model.h5
     metrics:
-      - models/metrics.json
+      - models/metrics.json:
+          cache: false
     outs:
       - models/confusion_matrix.csv
       - models/confusion_matrix.png
